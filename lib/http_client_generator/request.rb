@@ -33,6 +33,14 @@ module HttpClientGenerator
       default_headers.merge(headers)
     end
 
+    def raw_body
+      if json?
+        body && body.to_json
+      else
+        body
+      end
+    end
+
     def raise_error(e)
       Sentry.capture_exception(e, extra: { request_id: extra[:request_id] }) if Object.const_defined?(:Sentry)
       raise base::RequestError, e.message, e.backtrace, cause: nil
@@ -50,4 +58,3 @@ module HttpClientGenerator
     end
   end
 end
-

@@ -21,8 +21,7 @@ module HttpClientGenerator
       request_attributes = [request.verb, request.url]
 
       if request.body
-        request.body = request.body.to_json if request.json?
-        request_attributes << { body: request.body }
+        request_attributes << { body: request.raw_body }
       end
 
       request.response_body = HTTP[request.current_headers].public_send(*request_attributes).to_s
