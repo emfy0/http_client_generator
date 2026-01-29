@@ -11,8 +11,8 @@ module HttpClientGenerator
       @base = base
       @content_type = content_type
       @name = name
-      @req_plugs = req_plugs
-      @resp_plugs = resp_plugs
+      @req_plugs = select_plugs(req_plugs)
+      @resp_plugs = select_plugs(resp_plugs)
     end
 
     def perform_request(url_helper, url_options, body, rest_args)
@@ -47,6 +47,17 @@ module HttpClientGenerator
       resp_plugs.reduce(request) { |req, plug| plug.call(req) }
 
       request.response_body
+    end
+
+    def select_plugs(plug_entries)
+      plug_entries.filter_map do |entry|
+        entry in only:, except:, plug:
+
+        next if only.any? && !only.include?(name)
+        next if except.include?(name)
+
+        plug
+      end
     end
   end
 end
