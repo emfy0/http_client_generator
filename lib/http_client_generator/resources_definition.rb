@@ -23,12 +23,12 @@ module HttpClientGenerator
       end
     end
 
-    def req_plug(plug, *args, **kwargs)
-      @req_plugs << build_plug(plug, *args, **kwargs)
+    def req_plug(plug, *args, only: nil, except: nil, **kwargs)
+      @req_plugs << build_plug_entry(plug, *args, only: only, except: except, **kwargs)
     end
 
-    def resp_plug(plug, *args, **kwargs)
-      @resp_plugs << build_plug(plug, *args, **kwargs)
+    def resp_plug(plug, *args, only: nil, except: nil, **kwargs)
+      @resp_plugs << build_plug_entry(plug, *args, only: only, except: except, **kwargs)
     end
 
     def namespace(_name, &block)
@@ -38,6 +38,14 @@ module HttpClientGenerator
     end
 
     private
+
+    def build_plug_entry(plug, *args, only:, except:, **kwargs)
+      {
+        plug: build_plug(plug, *args, **kwargs),
+        only: Array(only).compact.uniq.map(&:to_sym),
+        except: Array(except).compact.uniq.map(&:to_sym)
+      }
+    end
 
     def build_plug(plug, *args, **kwargs)
       if plug.respond_to?(:call)
