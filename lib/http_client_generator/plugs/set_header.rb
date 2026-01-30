@@ -5,13 +5,16 @@ module HttpClientGenerator
     class SetHeader
       Plugs.register :set_header, self
 
-      def initialize(arg:, header:, func: nil)
+      def initialize(arg: nil, value: nil, header:, func: nil)
         @arg = arg
         @header = header
         @func = func
+        @value = value
       end
 
       def call(req)
+        return process_header_value(req) if @value
+
         arg = req.rest_args[@arg]
 
         req.headers[@header] =
@@ -22,6 +25,19 @@ module HttpClientGenerator
             @func.(req, arg)
           in nil
             arg
+          end
+
+        req
+      end
+
+      private
+
+      def process_header_value(req)
+        req.headers[@header] =
+          if @value.is_a?(Proc)
+            @value.()
+          else
+            @value
           end
 
         req
