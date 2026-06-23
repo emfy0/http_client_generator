@@ -49,7 +49,7 @@ RSpec.describe 'GitHub client from the README example' do
 
         def build_url(url:, query: {})
           uri = URI(url)
-          query_values = query.compact.transform_keys { |key| key.to_s.camelize(:lower) }
+          query_values = query.compact.transform_keys { |key| HttpClientGenerator::Inflector.camelize_lower(key) }
 
           uri.query = URI.encode_www_form(query_values) if query_values.any?
           uri.to_s
@@ -149,15 +149,33 @@ RSpec.describe 'GitHub client from the README example' do
       body: {
         title: 'Bug report',
         body: 'Steps to reproduce...',
-        assignee_ids: [1, 2]
+        assignee_ids: [1, 2],
+        milestone: {
+          due_on: '2026-06-23'
+        },
+        labels: [
+          { label_id: 10 }
+        ]
       },
       request_id: 'request-3'
     )
 
+    expected_body = {
+      title: 'Bug report',
+      body: 'Steps to reproduce...',
+      assigneeIds: [1, 2],
+      milestone: {
+        dueOn: '2026-06-23'
+      },
+      labels: [
+        { labelId: 10 }
+      ]
+    }.to_json
+
     expect(response).to eq(html_url: 'https://github.test/issues/42')
     expect(http_client).to have_received(:post).with(
       'https://api.github.test/repos/octo-org/octo-repo/issues',
-      body: '{"title":"Bug report","body":"Steps to reproduce...","assigneeIds":[1,2]}'
+      body: expected_body
     )
   end
 

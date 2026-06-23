@@ -15,7 +15,6 @@ Gem::Specification.new do |spec|
   spec.files = Dir['lib/**/*.rb', 'LICENSE.txt', 'README.md']
   spec.require_paths = ['lib']
 
-  spec.add_dependency('activesupport', '>= 7.0')
   spec.add_dependency('http', '~> 5.2')
   spec.add_dependency('zeitwerk', '~> 2.6')
 end

@@ -127,7 +127,7 @@ module GitHub
 
     def build_url(url:, query: {})
       uri = URI(url)
-      query_values = query.compact.transform_keys { |key| key.to_s.camelize(:lower) }
+      query_values = query.compact.transform_keys { |key| HttpClientGenerator::Inflector.camelize_lower(key) }
 
       uri.query = URI.encode_www_form(query_values) if query_values.any?
       uri.to_s

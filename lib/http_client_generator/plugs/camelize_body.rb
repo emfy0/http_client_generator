@@ -2,13 +2,13 @@
 
 module HttpClientGenerator
   class Plugs
-    class CamelizeBody
+    class CamelizeBody # :nodoc:
       Plugs.register :camelize_body, self
 
       def call(req)
         body =
           if req.json? && req.body.is_a?(Hash)
-            req.body.deep_transform_keys { |key| key.to_s.camelize(:lower).to_sym }
+            KeyTransformer.deep_transform_keys(req.body) { |key| Inflector.camelize_lower(key).to_sym }
           else
             req.body
           end
