@@ -7,9 +7,9 @@ require 'active_support/core_ext/hash/keys'
 
 Zeitwerk::Loader.for_gem.setup
 
-Dir["#{__dir__}/http_client_generator/plugs/*.rb"].each { |f| require f }
+Dir["#{__dir__}/http_client_generator/plugs/*.rb"].sort.each { |f| require f }
 
-module HttpClientGenerator
+module HttpClientGenerator # :nodoc:
   def self.included(base)
     super
 
@@ -30,8 +30,8 @@ module HttpClientGenerator
     resources.each do |resource|
       method_name = :"#{resource.verb}_#{resource.name}"
 
-      define_singleton_method(method_name) do |url_options = {}, body: nil, **rest_args|
-        resource.perform_request(@url_helper, url_options, body, rest_args)
+      define_singleton_method(method_name) do |url_options = {}, body: nil, timeout: nil, **rest_args|
+        resource.perform_request(@url_helper, url_options, body, rest_args, timeout)
       end
     end
   end
@@ -40,9 +40,9 @@ module HttpClientGenerator
 
   def configure(&configure)
     @config = self::Configuration.new
-      .tap(&configure)
-      .tap { |c| user_process_config(c) if respond_to?(:user_process_config) }
-      .tap(&:freeze)
+                                 .tap(&configure)
+                                 .tap { |c| user_process_config(c) if respond_to?(:user_process_config) }
+                                 .tap(&:freeze)
   end
 
   def process_config(&block)

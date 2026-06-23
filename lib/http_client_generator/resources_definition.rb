@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module HttpClientGenerator
-  class ResourcesDefinition
+  class ResourcesDefinition # :nodoc:
     attr_reader :resources
 
     DEFAULT_OPTIONS = {
@@ -10,11 +10,12 @@ module HttpClientGenerator
 
     HTTP_VERBS = %i[get post put patch].freeze
 
-    def initialize(base, req_plugs = [], resp_plugs = [])
+    def initialize(base, req_plugs = [], resp_plugs = [], timeout = nil)
       @base = base
       @resources = []
       @req_plugs = req_plugs
       @resp_plugs = resp_plugs
+      @timeout = timeout
     end
 
     HTTP_VERBS.each do |verb|
@@ -31,8 +32,12 @@ module HttpClientGenerator
       @resp_plugs << build_plug_entry(plug, *args, only: only, except: except, **kwargs)
     end
 
-    def namespace(_name, &block)
-      namespaced_definition = ResourcesDefinition.new(@base, @req_plugs.dup, @resp_plugs.dup)
+    def timeout(value = nil, **options)
+      @timeout = TimeoutNormalizer.call(value, **options)
+    end
+
+    def namespace(_name = nil, &block)
+      namespaced_definition = ResourcesDefinition.new(@base, @req_plugs.dup, @resp_plugs.dup, @timeout)
       namespaced_definition.instance_eval(&block)
       @resources += namespaced_definition.resources
     end
@@ -58,18 +63,28 @@ module HttpClientGenerator
     end
 
     def build_resource(verb, name, options)
+      resource_options = with_defaults(options)
+
       Resource.new(
         verb: verb,
         name: name,
         base: @base,
         req_plugs: @req_plugs,
         resp_plugs: @resp_plugs,
-        **with_defaults(options)
+        **resource_options
       )
     end
 
     def with_defaults(options)
-      DEFAULT_OPTIONS.merge(options)
+      resource_options = DEFAULT_OPTIONS.merge(options)
+      resource_options[:timeout] =
+        if options.key?(:timeout)
+          TimeoutNormalizer.call(options[:timeout])
+        else
+          @timeout
+        end
+
+      resource_options
     end
   end
 end
