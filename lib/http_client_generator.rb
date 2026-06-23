@@ -2,9 +2,6 @@
 
 require 'zeitwerk'
 
-require 'active_support/core_ext/string/inflections'
-require 'active_support/core_ext/hash/keys'
-
 Zeitwerk::Loader.for_gem.setup
 
 Dir["#{__dir__}/http_client_generator/plugs/*.rb"].sort.each { |f| require f }
