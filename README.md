@@ -29,8 +29,6 @@ provide a URL helper module with methods that match each resource name.
 This example sketches a small GitHub API client.
 
 ```ruby
-# frozen_string_literal: true
-
 require 'http_client_generator'
 require 'zeitwerk'
 
@@ -38,10 +36,6 @@ Zeitwerk::Loader.for_gem.setup
 
 module GitHub
   include HttpClientGenerator
-
-  BASE_URL = 'https://api.github.com'
-
-  private_constant :BASE_URL
 
   Configuration = Struct.new(:base_url, :access_token, keyword_init: true)
 
@@ -91,8 +85,6 @@ end
 ```
 
 ```ruby
-# frozen_string_literal: true
-
 require 'uri'
 
 module GitHub
