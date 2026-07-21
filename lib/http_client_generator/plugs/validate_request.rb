@@ -5,8 +5,9 @@ module HttpClientGenerator
     class ValidateRequest
       Plugs.register :validate_request, self
 
-      def initialize(schema_helper:)
+      def initialize(schema_helper:, show_body_in_error: false)
         @schema_helper = schema_helper
+        @show_body_in_error = show_body_in_error
       end
 
       def call(req)
@@ -14,8 +15,19 @@ module HttpClientGenerator
 
         return req unless @schema_helper.respond_to?(schema_name)
 
-        req.response_body = @schema_helper.public_send(schema_name, req.body)
-          .value_or { |e| req.raise_message("Unexpected #{e.inspect} in #{req.body}") }
+        req.response_body =
+          @schema_helper
+          .public_send(schema_name, req.body)
+          .value_or do |e|
+            message =
+              if @show_body_in_error
+                "Unexpected #{e.inspect} in #{req.body}"
+              else
+                "Unexpected #{e.inspect}"
+              end
+
+            req.raise_message(message)
+          end
 
         req
       end
