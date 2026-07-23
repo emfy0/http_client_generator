@@ -199,10 +199,11 @@ RSpec.describe 'timeout DSL' do
   def stub_http_response # rubocop:disable Metrics/AbcSize
     http_client = double('HTTP::Client')
     timeout_client = double('HTTP::Client')
+    response = double('HTTP::Response', status: double(code: 200), to_s: 'ok')
 
     allow(http_client).to receive(:timeout).and_return(timeout_client)
-    allow(http_client).to receive(:get).and_return('ok')
-    allow(timeout_client).to receive(:get).and_return('ok')
+    allow(http_client).to receive(:get).and_return(response)
+    allow(timeout_client).to receive(:get).and_return(response)
 
     allow(http_client).to receive(:timeout_client).and_return(timeout_client)
     allow(HTTP).to receive(:[]).and_return(http_client)

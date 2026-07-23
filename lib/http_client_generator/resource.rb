@@ -4,24 +4,34 @@ require 'http'
 
 module HttpClientGenerator
   class Resource # :nodoc:
-    attr_reader :verb, :content_type, :name, :req_plugs, :resp_plugs, :base, :timeout
+    attr_reader :verb, :content_type, :name, :req_plugs, :resp_head_plugs, :resp_plugs, :base, :timeout, :stream
 
     # rubocop:disable Metrics/ParameterLists
-    def initialize(verb:, content_type:, timeout:, name:, base:, req_plugs:, resp_plugs:)
+    def initialize(verb:, content_type:, timeout:, name:, base:, req_plugs:, resp_head_plugs:, resp_plugs:,
+                   stream: false)
       @verb = verb
       @base = base
       @content_type = content_type
       @timeout = timeout
       @name = name
+      @stream = stream
       @req_plugs = select_plugs(req_plugs)
+      @resp_head_plugs = select_plugs(resp_head_plugs)
       @resp_plugs = select_plugs(resp_plugs)
+      validate_streaming_plugs!
     end
     # rubocop:enable Metrics/ParameterLists
 
     def perform_request(url_helper, url_options, body, rest_args, timeout_override)
       request = prepare_request(url_helper, url_options, body, rest_args, timeout_override)
 
-      request.response_body = perform_http_request(request).to_s
+      response = perform_http_request(request)
+      request.response_status = response.status.code
+      request = process_response_head(request)
+
+      return response.body if stream
+
+      request.response_body = response.to_s
 
       process_response(request)
     rescue HTTP::Error => e
@@ -67,6 +77,16 @@ module HttpClientGenerator
       resp_plugs.reduce(request) { |req, plug| plug.call(req) }
 
       request.response_body
+    end
+
+    def process_response_head(request)
+      resp_head_plugs.reduce(request) { |req, plug| plug.call(req) }
+    end
+
+    def validate_streaming_plugs!
+      return unless stream && resp_plugs.any?
+
+      raise ArgumentError, "Streaming resource #{name.inspect} cannot use response body plugs"
     end
 
     def select_plugs(plug_entries)

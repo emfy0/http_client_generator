@@ -10,11 +10,12 @@ module HttpClientGenerator
 
     HTTP_VERBS = %i[get post put patch].freeze
 
-    def initialize(base, req_plugs = [], resp_plugs = [], timeout = nil)
+    def initialize(base, req_plugs = [], response_plugs = {}, timeout = nil)
       @base = base
       @resources = []
       @req_plugs = req_plugs
-      @resp_plugs = resp_plugs
+      @resp_head_plugs = response_plugs.fetch(:head, [])
+      @resp_plugs = response_plugs.fetch(:body, [])
       @timeout = timeout
     end
 
@@ -32,12 +33,18 @@ module HttpClientGenerator
       @resp_plugs << build_plug_entry(plug, *args, only: only, except: except, **kwargs)
     end
 
+    def resp_head_plug(plug, *args, only: nil, except: nil, **kwargs)
+      @resp_head_plugs << build_plug_entry(plug, *args, only: only, except: except, **kwargs)
+    end
+
     def timeout(value = nil, **options)
       @timeout = TimeoutNormalizer.call(value, **options)
     end
 
     def namespace(_name = nil, &block)
-      namespaced_definition = ResourcesDefinition.new(@base, @req_plugs.dup, @resp_plugs.dup, @timeout)
+      namespaced_definition = ResourcesDefinition.new(
+        @base, @req_plugs.dup, { head: @resp_head_plugs.dup, body: @resp_plugs.dup }, @timeout
+      )
       namespaced_definition.instance_eval(&block)
       @resources += namespaced_definition.resources
     end
@@ -70,6 +77,7 @@ module HttpClientGenerator
         name: name,
         base: @base,
         req_plugs: @req_plugs,
+        resp_head_plugs: @resp_head_plugs,
         resp_plugs: @resp_plugs,
         **resource_options
       )

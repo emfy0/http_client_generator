@@ -273,12 +273,18 @@ be called by the generated client methods.
 ## Plugs
 
 Plugs are objects that respond to `call(request)`. Request plugs run before the
-HTTP request. Response plugs run after the response body is read.
+HTTP request. Response-head plugs run after the status is received but before
+the body is read. Response plugs run after the response body is read.
 
 ```ruby
 resources do
   req_plug :set_request_id, :x_request_id
   req_plug :set_bearer_token, from_arg: :access_token
+
+  resp_head_plug ->(request) {
+    request.raise_message('Profile is unavailable') if request.response_status == 404
+    request
+  }
 
   resp_plug :enforce_json_response
   resp_plug :underscore_response
@@ -305,6 +311,30 @@ Built-in response plugs:
 | `:encode_json_response` | Parses JSON responses when possible and leaves invalid JSON unchanged. |
 | `:underscore_response` | Underscores parsed response keys. |
 | `:validate_response` | Validates parsed response bodies with a schema helper. |
+
+`request.response_status` is the integer HTTP status code. It is available to
+response-head plugs and ordinary response plugs.
+
+### Streaming responses
+
+Declare `stream: true` to return the `HTTP::Response::Body` without eagerly
+reading it. Consume the returned body with `each` or `readpartial`:
+
+```ruby
+resources do
+  resp_head_plug ->(request) {
+    request.raise_message('Download failed') unless request.response_status == 200
+    request
+  }
+
+  get :download_archive, stream: true
+end
+
+Client.get_download_archive.each { |chunk| write_chunk(chunk) }
+```
+
+Streaming resources cannot use ordinary `resp_plug`s because those plugs require
+a materialized body. Use `resp_head_plug` for streaming-specific handling.
 
 Limit plugs to specific resources with `only:` or `except:`:
 

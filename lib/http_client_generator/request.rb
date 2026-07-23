@@ -16,7 +16,7 @@ module HttpClientGenerator
     end
 
     attr_accessor :verb, :name, :content_type, :timeout, :url, :headers, :body, :rest_args, :response_body,
-                  :base, :extra
+                  :response_status, :base, :extra
 
     # rubocop:disable Metrics/ParameterLists
     def initialize(base:, name:, verb:, content_type:, timeout:, url:, body:, rest_args:)

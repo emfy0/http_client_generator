@@ -197,10 +197,11 @@ RSpec.describe 'GitHub client from the README example' do
 
   def stub_http_response(response_body)
     http_client = instance_double('HTTP::Client')
+    response = double('HTTP::Response', status: double(code: 200), to_s: response_body.to_json)
 
     allow(HTTP).to receive(:[]).and_return(http_client)
     %i[get post patch].each do |verb|
-      allow(http_client).to receive(verb).and_return(response_body.to_json)
+      allow(http_client).to receive(verb).and_return(response)
     end
 
     http_client
