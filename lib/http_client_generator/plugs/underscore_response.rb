@@ -12,6 +12,8 @@ module HttpClientGenerator
           KeyTransformer.deep_transform_keys(req.response_body) { |key| Inflector.underscore(key).to_sym }
 
         req
+      rescue KeyTransformer::CollisionError => e
+        req.raise_message(e.message)
       end
     end
   end
