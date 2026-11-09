@@ -16,6 +16,8 @@ module HttpClientGenerator
         req.body = body
 
         req
+      rescue KeyTransformer::CollisionError => e
+        req.raise_message(e.message)
       end
     end
   end

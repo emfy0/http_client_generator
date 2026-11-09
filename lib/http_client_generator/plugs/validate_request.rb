@@ -15,7 +15,7 @@ module HttpClientGenerator
 
         return req unless @schema_helper.respond_to?(schema_name)
 
-        req.response_body =
+        req.body =
           @schema_helper
           .public_send(schema_name, req.body)
           .value_or do |e|
